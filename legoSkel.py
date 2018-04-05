@@ -4,6 +4,8 @@ bl_info = {
 }
 
 import bpy
+from bpy_extras.io_utils import ImportHelper
+from bpy.props import StringProperty, BoolProperty, EnumProperty
 
 origin = (0, 0, 0)
 amtName = "Armature"
@@ -169,14 +171,55 @@ class LegoSkeletonSpectator(bpy.types.Operator):
             print(bone.name, ":", bone.tail)
         return {'FINISHED'}
 
+class LegoImporter(bpy.types.Operator, ImportHelper):
+    bl_idname = "object.lego_importer"
+    bl_label = "Lego Importer"
+    bl_options = {'REGISTER'}
+
+    adjust_transform = BoolProperty(
+        name="Adjust Transform",
+        description="Scale /= 25; rotate.x(-90);",
+        default=True,
+    )
+
+    def import_lego(self, context):
+        print('Beginning Lego import from', self.filepath, 'with settings', self.adjust_transform)
+        fig = bpy.ops.import_scene.obj(filepath=self.filepath, axis_forward='Y')
+        if(self.adjust_transform):
+            bpy.ops.transform.resize(value=(1/25,1/25,1/25))
+
+        bpy.ops.object.shade_smooth()
+
+        mini_array = bpy.context.selected_objects
+        for obj in mini_array:
+            bpy.context.scene.objects.active = obj
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.mesh.normals_make_consistent(inside=False)
+            bpy.ops.object.mode_set(mode='OBJECT')
+
+
+        return {'FINISHED'}
+
+    def execute(self, context):
+        return self.import_lego(context)
 
 def register():
     bpy.utils.register_class(LegoSkeletonCreator)
     bpy.utils.register_class(LegoSkeletonSpectator)
     bpy.utils.register_class(Utils)
+    bpy.utils.register_class(LegoImporter)
+
 
 
 def unregister():
     bpy.utils.unregister_class(LegoSkeletonCreator)
     bpy.utils.unregister_class(LegoSkeletonSpectator)
     bpy.utils.unregister_class(Utils)
+    bpy.utils.unregister_class(LegoImporter)
+
+if __name__ == "__main__":
+    print('-------------------------------')
+    register()
+    #simulate a call to import
+    bpy.ops.object.lego_importer('INVOKE_DEFAULT')
