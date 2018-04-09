@@ -88,15 +88,16 @@ class LegoSkeletonCreator(bpy.types.Operator):
         bone = amt.edit_bones.new('Hand' + ((isLeft and 'L') or 'R'))
         bone.parent = arm
 
-        hx = 0.85
-        hy = 0
-        hz = 0.8
+        hx = 0.91
+        hy = -0.2
+        hz = 2.0 - origin[2] #voilà, zut.
         bone.head = ((isLeft and hx) or -hx, hy, hz)
         bone.head = tuple(map(operator.add, origin, bone.head))
 
-        tx = 0.924
+        tx = 0.94
         ty = -0.4
         tz = 0.4
+
         bone.tail = ((isLeft and tx) or -tx, ty, tz)
         bone.tail = tuple(map(operator.add, origin, bone.tail))
 
@@ -115,21 +116,18 @@ class LegoSkeletonCreator(bpy.types.Operator):
         bone.tail = tuple(map(operator.add, origin, bone.tail))
 
     def rigBone(self, piece, amtObject, bone):
-        print('    rigging', piece.name, 'to', bone)
+        #print('    rigging', piece.name, 'to', bone)
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.select_all(action='DESELECT')
         amtObject.select = True
         bpy.context.scene.objects.active = amtObject
 
         #this has to be set in OBJECT mode, not in EDIT or POSE
-        print('active bone of', amtObject.name, ':', amtObject.data.bones.active)
         amtObject.data.bones.active = bone
 
-        print('active bone of', amtObject.name, ':', amtObject.data.bones.active)
-
         piece.select = True
-        bpy.ops.object.parent_set(type='BONE')
-        print(piece.name, 'now has parent :', piece.parent_bone)
+        bpy.ops.object.parent_set(type='BONE_RELATIVE')
+        #print(piece.name, 'now has parent :', piece.parent_bone)
 
     def rig(self, pieces, amtObject):
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -182,6 +180,7 @@ class LegoSkeletonCreator(bpy.types.Operator):
 
         bpy.ops.object.mode_set(mode='EDIT')
         ob = bpy.context.object
+        ob.show_x_ray = True
         amt = ob.data
         amtName = ob.name
         self.handle_torso(amt)
